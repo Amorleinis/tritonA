@@ -14,6 +14,7 @@ import os
 import subprocess
 from pathlib import Path
 import sysconfig
+from security import safe_command
 
 
 def min_dot_size(target: GPUTarget):
@@ -397,7 +398,7 @@ class CUDABackend(BaseBackend):
             opt_level = ['--opt-level', '0'] if os.environ.get("DISABLE_PTXAS_OPT", "0") == "1" else []
             ptxas_cmd = [ptxas, *line_info, *fmad, '-v', *opt_level, f'--gpu-name={arch}', fsrc.name, '-o', fbin]
             try:
-                subprocess.run(ptxas_cmd, check=True, close_fds=False, stderr=flog)
+                safe_command.run(subprocess.run, ptxas_cmd, check=True, close_fds=False, stderr=flog)
                 if os.path.exists(fsrc.name):
                     os.remove(fsrc.name)
                 if os.path.exists(flog.name):

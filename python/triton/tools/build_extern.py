@@ -2,6 +2,7 @@ import argparse
 import subprocess
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
+from security import safe_command
 
 
 class Symbol:
@@ -315,7 +316,7 @@ class LLVMDisassembler:
         self._ll_file = "/tmp/extern_lib.ll"
 
     def disasm(self, lib_path: str) -> None:
-        subprocess.Popen([self._path, lib_path, "-o", self.ll_file], stdout=subprocess.PIPE).communicate()
+        safe_command.run(subprocess.Popen, [self._path, lib_path, "-o", self.ll_file], stdout=subprocess.PIPE).communicate()
 
     @property
     def ll_file(self) -> str:

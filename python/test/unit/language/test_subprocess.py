@@ -8,6 +8,7 @@ import triton
 from triton._internal_testing import is_interpreter
 
 import pytest
+from security import safe_command
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print_path = os.path.join(dir_path, "print_helper.py")
@@ -35,8 +36,7 @@ torch_types = ["int8", "uint8", "int16", "int32", "long", "float16", "float32", 
                                                       ("device_print_2d_tensor", "int32"),
                                                   ])
 def test_print(func_type: str, data_type: str, device: str):
-    proc = subprocess.run(
-        [sys.executable, print_path, "test_print", func_type, data_type, device],
+    proc = safe_command.run(subprocess.run, [sys.executable, print_path, "test_print", func_type, data_type, device],
         capture_output=True,
     )
     assert proc.returncode == 0

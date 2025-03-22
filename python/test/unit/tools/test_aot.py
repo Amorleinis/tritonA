@@ -9,6 +9,7 @@ import numpy as np
 import triton
 from triton.backends.compiler import GPUTarget
 from triton.backends.nvidia.driver import include_dir, library_dirs
+from security import safe_command
 
 kernel_utils_src = """
 import triton
@@ -99,8 +100,7 @@ static void read_csv_to_buffer(char *filename, int16_t *buffer, int size) {
 
 def gen_kernel_library(dir, libname):
     c_files = glob.glob(os.path.join(dir, "*.c"))
-    subprocess.run(
-        ["gcc"] + c_files + ["-I", include_dir[0], "-c", "-fPIC"],
+    safe_command.run(subprocess.run, ["gcc"] + c_files + ["-I", include_dir[0], "-c", "-fPIC"],
         check=True,
         cwd=dir,
     )
@@ -109,7 +109,7 @@ def gen_kernel_library(dir, libname):
     command = ["gcc", *o_files, "-shared", "-o", libname]
     for lib_dir in library_dirs():
         command.extend(["-L", lib_dir])
-    subprocess.run(command, check=True, cwd=dir)
+    safe_command.run(subprocess.run, command, check=True, cwd=dir)
 
 
 def gen_test_bin(dir, M, N, K, exe="test", algo_id=0):
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {{
     for lib_dir in library_dirs():
         command.extend(["-L", lib_dir])
     command.extend(["-l", "cuda", "-L", dir, "-l", "kernel", "-o", exe])
-    subprocess.run(command, check=True, cwd=dir)
+    safe_command.run(subprocess.run, command, check=True, cwd=dir)
 
 
 def write_triton_kernels(dir, src, util_src):
@@ -198,8 +198,7 @@ def write_triton_kernels(dir, src, util_src):
 def _compile_kernel(dir, signature, kernel_name, out_name, out_path, num_warps, grid, kernel_path):
     compiler_path = os.path.join(triton.tools.__path__[0], "compile.py")
 
-    subprocess.run(
-        [
+    safe_command.run(subprocess.run, [
             sys.executable,
             compiler_path,
             "-n",
@@ -263,7 +262,7 @@ def link_aot_kernels(dir):
 
     # link all desired configs
     h_files = glob.glob(os.path.join(dir, "*.h"))
-    subprocess.run([sys.executable, linker_path] + h_files + ["-o", "kernel"], check=True, cwd=dir)
+    safe_command.run(subprocess.run, [sys.executable, linker_path] + h_files + ["-o", "kernel"], check=True, cwd=dir)
 
 
 def generate_matmul_test_data(dir, M, N, K):
@@ -411,8 +410,7 @@ def test_compile_link_autotune_matmul():
 
             env = os.environ.copy()
             env["LD_LIBRARY_PATH"] = tmp_dir
-            subprocess.run(
-                [f"./{test_name}", a_path, b_path, c_path],
+            safe_command.run(subprocess.run, [f"./{test_name}", a_path, b_path, c_path],
                 check=True,
                 cwd=tmp_dir,
                 env=env,
