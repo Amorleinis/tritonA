@@ -1,9 +1,9 @@
-import random
 import torch
 import math
 
 import triton.profiler as proton
 import argparse
+import secrets
 
 mode = "torch"
 
@@ -34,7 +34,7 @@ class DynamicNet(torch.nn.Module):
         times when defining a computational graph.
         """
         y = self.a + self.b * x + self.c * x**2 + self.d * x**3
-        for exp in range(4, random.randint(4, 6)):
+        for exp in range(4, secrets.SystemRandom().randint(4, 6)):
             y = y + self.e * x**exp
         return y
 
